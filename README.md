@@ -8,10 +8,14 @@ Verso is an early prototype focused on a small footprint and ordinary document w
 
 - Open `.md` and `.markdown` UTF-8 documents in individual windows.
 - Read a rendered preview of headings, emphasis, inline code, fenced code, and HTTP links.
-- Edit styled Markdown with syntax markers visible, or use a monospaced source view.
+- Edit raw Markdown in a monospaced source view. New documents open in Source mode.
 - Native save, autosave, find, and text editing commands.
 
-Styled editing is not yet a marker-free rich text editor. Unsupported Markdown remains visible; images, tables, nested formatting, and full CommonMark rendering are not implemented. Source is preserved independently of the reading preview. Switching views currently clears text undo history.
+Read mode is a preview; editing happens in Source mode. Marker-free rich text editing is not implemented. Unsupported Markdown remains visible; images, tables, nested formatting, and full CommonMark rendering are not implemented. Source is preserved independently of the reading preview. Switching views currently clears text undo history.
+
+## Optional iCloud Drive storage
+
+Choose iCloud Drive in the native Save or Open panel to work with documents there, or choose a local folder to keep them local. macOS manages iCloud Drive synchronization. Verso does not yet have a dedicated iCloud container or an iOS app, and cross-device sync has not been validated. See [the iCloud document design](docs/ICLOUD_DOCUMENTS.md) for the mobile integration path.
 
 ## Build and run
 
@@ -27,7 +31,7 @@ Open `Package.swift` in Xcode to develop. Run the packaged app for document asso
 
 ## Efficiency
 
-Rendering happens on opening or switching a view and after a 200 ms pause in styled editing. There is no idle polling. The current renderer processes the whole document on the main thread; large-file latency and memory use need profiling before efficiency claims or release. Source mode avoids Markdown rendering while typing.
+Rendering happens when entering Read mode or when its document content changes. There is no idle polling. The current renderer processes the whole document on the main thread; large-file latency and memory use need profiling before efficiency claims or release. Source mode avoids Markdown rendering while typing.
 
 ## Releases and contributions
 

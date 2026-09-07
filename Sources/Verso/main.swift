@@ -24,12 +24,11 @@ struct MarkdownDocument: FileDocument {
 }
 
 enum EditorMode: String, CaseIterable, Identifiable {
-    case read = "Read", styled = "Styled", source = "Source"
+    case read = "Read", source = "Source"
     var id: String { rawValue }
     var caption: String {
         switch self {
         case .read: "Reading preview"
-        case .styled: "Styled editing · Markdown markers stay visible"
         case .source: "Markdown source · UTF-8"
         }
     }
@@ -52,10 +51,10 @@ struct DocumentView: View {
             ToolbarItem(placement: .principal) {
                 Picker("Document view", selection: $mode) {
                     ForEach(EditorMode.allCases) { mode in Text(mode.rawValue).tag(mode) }
-                }.pickerStyle(.segmented).frame(width: 240)
+                }.pickerStyle(.segmented).frame(width: 180)
             }
         }
-        .onAppear { if document.source.isEmpty { mode = .styled } }
+        .onAppear { if document.source.isEmpty { mode = .source } }
     }
 }
 
@@ -90,21 +89,16 @@ struct MarkdownTextView: NSViewRepresentable {
         guard let text = scroll.documentView as? NSTextView else { return }
         let coordinator = context.coordinator
         if coordinator.mode != mode || coordinator.lastSource != source {
-            coordinator.pending?.cancel()
             if coordinator.mode != mode {
                 text.undoManager?.removeAllActions()
             }
             coordinator.refresh(text)
         }
     }
-    static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
-        coordinator.pending?.cancel()
-    }
     @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: MarkdownTextView
         var mode: EditorMode?
         var lastSource: String?
-        var pending: DispatchWorkItem?
         var applying = false
         init(_ parent: MarkdownTextView) { self.parent = parent }
         func refresh(_ text: NSTextView) {
@@ -118,7 +112,7 @@ struct MarkdownTextView: NSViewRepresentable {
                     .font: NSFont.monospacedSystemFont(ofSize: 14, weight: .regular), .foregroundColor: NSColor.textColor
                 ])
             } else {
-                rendered = Markdown.render(parent.source, reading: parent.mode == .read)
+                rendered = Markdown.render(parent.source)
             }
             text.isEditable = parent.mode != .read
             if text.string == rendered.string {
@@ -139,15 +133,7 @@ struct MarkdownTextView: NSViewRepresentable {
             guard !applying, let text = notification.object as? NSTextView, text.isEditable else { return }
             lastSource = text.string
             parent.source = text.string
-            pending?.cancel()
-            if parent.mode == .styled {
-                let work = DispatchWorkItem { [weak self, weak text] in
-                    guard let self, let text else { return }
-                    self.refresh(text)
-                }
-                pending = work
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
-            }
+
         }
     }
 }
